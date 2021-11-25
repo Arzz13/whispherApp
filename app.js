@@ -4,7 +4,7 @@ const express=require("express");
 const bodyParser=require("body-parser");
 const ejs=require("ejs");
 const mongoose=require('mongoose');
-const encrypt=require("mongoose-encryption");
+const md5=require("md5");
 
 const app=express();
 
@@ -22,7 +22,6 @@ const userSchema=new mongoose.Schema({
 });
 
 
-userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields:["password"]}); //Encrypts only the password field in user schema based on our secret string..So, email not encrypted
 
 const User=new mongoose.model("User",userSchema);
 
@@ -44,7 +43,7 @@ app.get("/register",function(req,res){
 app.post("/register",function(req,res){
     const newUser=new User({
         email:req.body.username,
-        password:req.body.password
+        password:md5(req.body.password)    //Saving the hash of password
     });
     newUser.save(function(err){
         if(!err)
@@ -56,7 +55,7 @@ app.post("/register",function(req,res){
 
 app.post("/login",function(req,res){
     const userName=req.body.username;
-    const password=req.body.password;
+    const password=md5(req.body.password);  //We compare the hash of password that the user entered with the hash present in database.
 
     User.findOne({email:userName},function(err,foundUser){
         if(err)
